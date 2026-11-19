@@ -1,0 +1,22 @@
+name: condition
+version: 1
+resource_type: Condition
+key: condition_id
+fields:
+  - {name: condition_id,        type: string,   required: true, phi: other_unique_id, deid: pseudonym}
+  - {name: patient_id,          type: string,   required: true, phi: other_unique_id, deid: pseudonym}
+  - {name: encounter_id,        type: string,   phi: other_unique_id, deid: pseudonym}
+  - {name: clinical_status,     type: string,   phi: none, deid: keep,
+     enum: [active, recurrence, relapse, inactive, remission, resolved]}
+  - {name: verification_status, type: string,   phi: none, deid: keep,
+     enum: [unconfirmed, provisional, differential, confirmed, refuted, entered-in-error]}
+  - {name: category,            type: string,   phi: none, deid: keep}
+  - {name: code_system,         type: string,   required: true, phi: none, deid: keep}
+  - {name: code,                type: string,   required: true, phi: none, deid: keep}
+  - {name: display,             type: string,   phi: none, deid: keep, free_text: true}
+  - {name: onset_datetime,      type: datetime, required: true, phi: date, deid: shift}
+  - {name: abatement_datetime,  type: datetime, phi: date, deid: shift}
+  - {name: recorded_date,       type: datetime, phi: date, deid: shift}
+rules:
+  - {kind: not_future, field: onset_datetime}
+  - {kind: not_before, field: abatement_datetime, than: onset_datetime}

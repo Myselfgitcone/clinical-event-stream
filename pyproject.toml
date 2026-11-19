@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "clinical-event-stream"
+version = "0.1.0"
+description = "FHIR R4 patient events, de-identified before silver, modelled as a star schema on DuckDB, landed to ADLS Gen2."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "duckdb>=1.1,<2",
+    "dbt-core>=1.10,<2",
+    "dbt-duckdb>=1.10,<2",
+    "pyarrow>=17",
+    "pyyaml>=6",
+    "jsonschema>=4.20",
+    "azure-storage-file-datalake>=12.20",
+    "azure-identity>=1.17",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+ces = "ces.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

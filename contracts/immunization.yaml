@@ -1,0 +1,17 @@
+name: immunization
+version: 1
+resource_type: Immunization
+key: immunization_id
+fields:
+  - {name: immunization_id,     type: string,   required: true, phi: other_unique_id, deid: pseudonym}
+  - {name: patient_id,          type: string,   required: true, phi: other_unique_id, deid: pseudonym}
+  - {name: encounter_id,        type: string,   phi: other_unique_id, deid: pseudonym}
+  - {name: status,              type: string,   required: true, phi: none, deid: keep,
+     enum: [completed, entered-in-error, not-done]}
+  - {name: code_system,         type: string,   required: true, phi: none, deid: keep}
+  - {name: code,                type: string,   required: true, phi: none, deid: keep}
+  - {name: display,             type: string,   phi: none, deid: keep, free_text: true}
+  - {name: occurrence_datetime, type: datetime, required: true, phi: date, deid: shift}
+  - {name: location_name,       type: string,   phi: none, deid: keep, free_text: true}
+rules:
+  - {kind: not_future, field: occurrence_datetime}

@@ -1,0 +1,26 @@
+name: encounter
+version: 1
+resource_type: Encounter
+key: encounter_id
+fields:
+  - {name: encounter_id,        type: string,   required: true, phi: other_unique_id, deid: pseudonym}
+  - {name: patient_id,          type: string,   required: true, phi: other_unique_id, deid: pseudonym}
+  - {name: patient_display,     type: string,   phi: name,      deid: drop}
+  - {name: status,              type: string,   required: true, phi: none, deid: keep,
+     enum: [planned, arrived, triaged, in-progress, onleave, finished, cancelled, entered-in-error, unknown]}
+  - {name: class_code,          type: string,   required: true, phi: none, deid: keep,
+     enum: [AMB, EMER, IMP, ACUTE, NONAC, OBSENC, PRENC, SS, VR, HH]}
+  - {name: type_code,           type: string,   phi: none,      deid: keep}
+  - {name: type_display,        type: string,   phi: none,      deid: keep, free_text: true}
+  - {name: period_start,        type: datetime, required: true, phi: date, deid: shift}
+  - {name: period_end,          type: datetime, phi: date,      deid: shift}
+  - {name: reason_code,         type: string,   phi: none,      deid: keep}
+  - {name: reason_display,      type: string,   phi: none,      deid: keep, free_text: true}
+  - {name: provider_org_id,     type: string,   phi: none,      deid: keep}
+  - {name: provider_org_name,   type: string,   phi: none,      deid: keep, free_text: true}
+  - {name: practitioner_npi,    type: string,   phi: none,      deid: keep}
+  - {name: practitioner_name,   type: string,   phi: none,      deid: drop}
+  - {name: location_name,       type: string,   phi: none,      deid: keep, free_text: true}
+rules:
+  - {kind: not_future, field: period_start}
+  - {kind: not_before, field: period_end, than: period_start}

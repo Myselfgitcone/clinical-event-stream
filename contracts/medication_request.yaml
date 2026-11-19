@@ -1,0 +1,21 @@
+name: medication_request
+version: 1
+resource_type: MedicationRequest
+key: medication_request_id
+fields:
+  - {name: medication_request_id, type: string, required: true, phi: other_unique_id, deid: pseudonym}
+  - {name: patient_id,          type: string,   required: true, phi: other_unique_id, deid: pseudonym}
+  - {name: encounter_id,        type: string,   phi: other_unique_id, deid: pseudonym}
+  - {name: status,              type: string,   required: true, phi: none, deid: keep,
+     enum: [active, on-hold, cancelled, completed, entered-in-error, stopped, draft, unknown]}
+  - {name: intent,              type: string,   required: true, phi: none, deid: keep}
+  - {name: category,            type: string,   phi: none, deid: keep}
+  - {name: code_system,         type: string,   required: true, phi: none, deid: keep}
+  - {name: code,                type: string,   required: true, phi: none, deid: keep}
+  - {name: display,             type: string,   phi: none, deid: keep, free_text: true}
+  - {name: authored_on,         type: datetime, required: true, phi: date, deid: shift}
+  - {name: requester_npi,       type: string,   phi: none, deid: keep}
+  - {name: requester_name,      type: string,   phi: none, deid: drop}
+  - {name: reason_condition_id, type: string,   phi: other_unique_id, deid: pseudonym}
+rules:
+  - {kind: not_future, field: authored_on}

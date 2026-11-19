@@ -1,0 +1,45 @@
+# One row per Patient resource. Flattened from FHIR R4 (US Core profile as Synthea emits it).
+# `phi` is the HIPAA Safe Harbor identifier class of the field, `deid` is what the
+# de-identification step does to it before the row may enter silver.
+name: patient
+version: 1
+resource_type: Patient
+key: patient_id
+fields:
+  - {name: patient_id,          type: string,   required: true, phi: other_unique_id, deid: pseudonym}
+  - {name: mrn,                 type: string,   phi: mrn,       deid: drop}
+  - {name: ssn,                 type: string,   phi: ssn,       deid: drop, pattern: "^\\d{3}-\\d{2}-\\d{4}$"}
+  - {name: drivers_license,     type: string,   phi: license,   deid: drop}
+  - {name: passport,            type: string,   phi: license,   deid: drop}
+  - {name: family_name,         type: string,   phi: name,      deid: drop}
+  - {name: given_name,          type: string,   phi: name,      deid: drop}
+  - {name: name_prefix,         type: string,   phi: name,      deid: drop}
+  - {name: maiden_name,         type: string,   phi: name,      deid: drop}
+  - {name: mothers_maiden_name, type: string,   phi: name,      deid: drop}
+  - {name: phone,               type: string,   phi: phone,     deid: drop}
+  - {name: fax,                 type: string,   phi: fax,       deid: drop}
+  - {name: email,               type: string,   phi: email,     deid: drop}
+  - {name: photo_url,           type: string,   phi: photo,     deid: drop}
+  - {name: gender,              type: string,   required: true, phi: none, deid: keep,
+     enum: [male, female, other, unknown]}
+  - {name: birth_date,          type: date,     required: true, phi: date, deid: birth_year_capped}
+  - {name: deceased_datetime,   type: datetime, phi: date,      deid: shift}
+  - {name: marital_status,      type: string,   phi: none,      deid: keep}
+  - {name: race,                type: string,   phi: none,      deid: keep}
+  - {name: ethnicity,           type: string,   phi: none,      deid: keep}
+  - {name: birth_sex,           type: string,   phi: none,      deid: keep, enum: [M, F]}
+  - {name: multiple_birth,      type: boolean,  phi: none,      deid: keep}
+  - {name: language,            type: string,   phi: none,      deid: keep}
+  - {name: address_line,        type: string,   phi: geo,       deid: drop}
+  - {name: city,                type: string,   phi: geo,       deid: drop}
+  - {name: state,               type: string,   phi: none,      deid: keep}
+  - {name: postal_code,         type: string,   phi: geo,       deid: zip3}
+  - {name: country,             type: string,   phi: none,      deid: keep}
+  - {name: latitude,            type: number,   phi: geo,       deid: drop, minimum: -90,  maximum: 90}
+  - {name: longitude,           type: number,   phi: geo,       deid: drop, minimum: -180, maximum: 180}
+  - {name: birthplace_city,     type: string,   phi: geo,       deid: drop}
+  - {name: birthplace_state,    type: string,   phi: none,      deid: keep}
+  - {name: narrative,           type: string,   phi: other_unique_id, deid: drop}
+rules:
+  - {kind: not_future, field: birth_date}
+  - {kind: not_before, field: deceased_datetime, than: birth_date}

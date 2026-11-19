@@ -1,0 +1,23 @@
+# generated data: raw Synthea bundles, bronze/silver/gold parquet, the DuckDB file
+data/
+.cache/
+site/data/
+
+# python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+
+# dbt
+transform/target/
+transform/dbt_packages/
+transform/logs/
+logs/
+
+# local secrets
+.env

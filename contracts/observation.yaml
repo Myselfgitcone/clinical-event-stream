@@ -1,0 +1,30 @@
+# One row per Observation, plus one row per component of a multi-component
+# observation (blood pressure is one resource with systolic and diastolic
+# components). Component rows carry the parent's id with a `#n` suffix.
+name: observation
+version: 1
+resource_type: Observation
+key: observation_id
+fields:
+  - {name: observation_id,      type: string,   required: true, phi: other_unique_id, deid: pseudonym}
+  - {name: parent_observation_id, type: string, phi: other_unique_id, deid: pseudonym}
+  - {name: patient_id,          type: string,   required: true, phi: other_unique_id, deid: pseudonym}
+  - {name: encounter_id,        type: string,   phi: other_unique_id, deid: pseudonym}
+  - {name: status,              type: string,   required: true, phi: none, deid: keep,
+     enum: [registered, preliminary, final, amended, corrected, cancelled, entered-in-error, unknown]}
+  - {name: category,            type: string,   phi: none, deid: keep}
+  - {name: code_system,         type: string,   required: true, phi: none, deid: keep}
+  - {name: code,                type: string,   required: true, phi: none, deid: keep}
+  - {name: display,             type: string,   phi: none, deid: keep, free_text: true}
+  - {name: effective_datetime,  type: datetime, required: true, phi: date, deid: shift}
+  - {name: issued,              type: datetime, phi: date, deid: shift}
+  - {name: value_quantity,      type: number,   phi: none, deid: keep}
+  - {name: value_unit,          type: string,   phi: none, deid: keep}
+  - {name: value_string,        type: string,   phi: none, deid: keep, free_text: true}
+  - {name: value_code,          type: string,   phi: none, deid: keep}
+  - {name: value_display,       type: string,   phi: none, deid: keep, free_text: true}
+  - {name: component_count,     type: integer,  phi: none, deid: keep, minimum: 0}
+rules:
+  - {kind: not_future, field: effective_datetime}
+  # a leaf observation must carry some value; a parent with components may not
+  - {kind: requires_any, fields: [value_quantity, value_string, value_code], unless_positive: component_count}

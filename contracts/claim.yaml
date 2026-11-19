@@ -1,0 +1,31 @@
+# Claims are the only place Synthea's FHIR export names the payer, so they are
+# the source of the payer dimension. Pharmacy claims have no encounter item and
+# are kept with a null encounter_id.
+name: claim
+version: 1
+resource_type: Claim
+key: claim_id
+fields:
+  - {name: claim_id,            type: string,   required: true, phi: other_unique_id, deid: pseudonym}
+  - {name: patient_id,          type: string,   required: true, phi: other_unique_id, deid: pseudonym}
+  - {name: patient_display,     type: string,   phi: name,      deid: drop}
+  - {name: encounter_id,        type: string,   phi: other_unique_id, deid: pseudonym}
+  - {name: status,              type: string,   required: true, phi: none, deid: keep,
+     enum: [active, cancelled, draft, entered-in-error]}
+  - {name: claim_type,          type: string,   required: true, phi: none, deid: keep,
+     enum: [institutional, oral, pharmacy, professional, vision]}
+  - {name: use,                 type: string,   phi: none, deid: keep, enum: [claim, preauthorization, predetermination]}
+  - {name: billable_start,      type: datetime, required: true, phi: date, deid: shift}
+  - {name: billable_end,        type: datetime, phi: date, deid: shift}
+  - {name: created,             type: datetime, phi: date, deid: shift}
+  - {name: provider_org_id,     type: string,   phi: none, deid: keep}
+  - {name: provider_org_name,   type: string,   phi: none, deid: keep, free_text: true}
+  - {name: payer_name,          type: string,   required: true, phi: none, deid: keep, free_text: true}
+  - {name: member_id,           type: string,   phi: health_plan_id, deid: drop}
+  - {name: total_value,         type: number,   phi: none, deid: keep, minimum: 0}
+  - {name: total_currency,      type: string,   phi: none, deid: keep}
+  - {name: diagnosis_count,     type: integer,  phi: none, deid: keep, minimum: 0}
+  - {name: item_count,          type: integer,  phi: none, deid: keep, minimum: 0}
+rules:
+  - {kind: not_future, field: billable_start}
+  - {kind: not_before, field: billable_end, than: billable_start}
