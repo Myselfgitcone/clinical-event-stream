@@ -1,0 +1,5 @@
+payer_name,payer_type
+NO_INSURANCE,none
+Medicare,public
+Medicaid,public
+Dual Eligible,public

@@ -1,0 +1,31 @@
+version: 2
+
+sources:
+  # Silver: de-identified parquet, one file per cohort per table. Never bronze.
+  - name: silver
+    meta:
+      external_location: "read_parquet('{{ env_var('CES_SILVER_DIR') }}/{name}/*.parquet', union_by_name = true)"
+    tables:
+      - name: patient
+        columns:
+          - name: patient_id
+            tests: [not_null, unique]
+      - name: encounter
+      - name: condition
+      - name: observation
+      - name: medication_request
+      - name: procedure
+      - name: immunization
+      - name: claim
+      - name: _audit
+        identifier: _audit
+        meta:
+          external_location: "read_parquet('{{ env_var('CES_SILVER_DIR') }}/_audit/*.parquet', union_by_name = true)"
+
+  # The quarantine lives in bronze. Only its reasons and counts are read here;
+  # the raw payload column is identified data and stays out of the warehouse.
+  - name: bronze
+    tables:
+      - name: quarantine
+        meta:
+          external_location: "(select contract, contract_version, resource_type, cohort_id, reasons, ingested_at from read_parquet('{{ env_var('CES_BRONZE_DIR') }}/quarantine/*.parquet', union_by_name = true))"

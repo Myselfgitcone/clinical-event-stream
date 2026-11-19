@@ -1,0 +1,122 @@
+version: 2
+
+models:
+  - name: dim_patient
+    description: Type 2 patient dimension; one row per attribute version, is_current marks the open row.
+    columns:
+      - name: patient_sk
+        tests: [not_null, unique]
+      - name: patient_key
+        tests:
+          - not_null
+          - pseudonym_shape
+      - name: age_band
+        tests:
+          - accepted_values: {arguments: {values: ["0-17", "18-34", "35-49", "50-64", "65-79", "80-89", "90+"]}}
+      - name: zip3
+        tests: [zip3_shape]
+  - name: dim_date
+    columns:
+      - name: date_key
+        tests: [not_null, unique]
+  - name: dim_condition
+    columns:
+      - name: condition_sk
+        tests: [not_null, unique]
+  - name: dim_medication
+    columns:
+      - name: medication_sk
+        tests: [not_null, unique]
+  - name: dim_provider
+    columns:
+      - name: provider_sk
+        tests: [not_null, unique]
+  - name: dim_payer
+    columns:
+      - name: payer_sk
+        tests: [not_null, unique]
+      - name: payer_type
+        tests:
+          - accepted_values: {arguments: {values: [public, private, none]}}
+
+  - name: fct_encounter
+    columns:
+      - name: encounter_key
+        tests:
+          - not_null
+          - unique
+          - pseudonym_shape
+      - name: patient_sk
+        tests:
+          - not_null
+          - relationships: {arguments: {to: ref('dim_patient'), field: patient_sk}}
+      - name: start_date_key
+        tests:
+          - not_null
+          - relationships: {arguments: {to: ref('dim_date'), field: date_key}}
+      - name: payer_sk
+        tests:
+          - relationships: {arguments: {to: ref('dim_payer'), field: payer_sk}}
+      - name: provider_sk
+        tests:
+          - relationships: {arguments: {to: ref('dim_provider'), field: provider_sk}}
+  - name: fct_condition
+    columns:
+      - name: condition_key
+        tests: [not_null, unique, pseudonym_shape]
+      - name: patient_sk
+        tests:
+          - not_null
+          - relationships: {arguments: {to: ref('dim_patient'), field: patient_sk}}
+      - name: condition_sk
+        tests:
+          - not_null
+          - relationships: {arguments: {to: ref('dim_condition'), field: condition_sk}}
+  - name: fct_medication_request
+    columns:
+      - name: medication_request_key
+        tests: [not_null, unique, pseudonym_shape]
+      - name: patient_sk
+        tests:
+          - not_null
+          - relationships: {arguments: {to: ref('dim_patient'), field: patient_sk}}
+      - name: medication_sk
+        tests:
+          - relationships: {arguments: {to: ref('dim_medication'), field: medication_sk}}
+  - name: fct_observation
+    columns:
+      - name: observation_key
+        tests: [not_null, unique, pseudonym_shape]
+      - name: patient_sk
+        tests:
+          - not_null
+          - relationships: {arguments: {to: ref('dim_patient'), field: patient_sk}}
+  - name: fct_procedure
+    columns:
+      - name: procedure_key
+        tests: [not_null, unique]
+      - name: patient_sk
+        tests: [not_null]
+  - name: fct_immunization
+    columns:
+      - name: immunization_key
+        tests: [not_null, unique]
+      - name: patient_sk
+        tests: [not_null]
+
+  - name: mart_condition_pairs
+    tests:
+      - unique_pair
+    columns:
+      - name: lift
+        tests: [not_null]
+  - name: mart_care_gaps
+    columns:
+      - name: diabetics
+        tests: [not_null]
+  - name: rpt_quarantine
+  - name: rpt_deid_audit
+    columns:
+      - name: table_name
+        tests: [not_null, unique]
+  - name: rpt_k_anonymity

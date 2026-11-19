@@ -1,0 +1,7 @@
+clinical_event_stream:
+  target: local
+  outputs:
+    local:
+      type: duckdb
+      path: "{{ env_var('CES_WAREHOUSE_PATH', '../data/warehouse/clinical.duckdb') }}"
+      threads: 4

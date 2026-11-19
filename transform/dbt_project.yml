@@ -1,0 +1,32 @@
+name: clinical_event_stream
+version: "1.0.0"
+config-version: 2
+profile: clinical_event_stream
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  clinical_event_stream:
+    +materialized: table
+    staging:
+      +schema: staging
+      +materialized: view
+    gold:
+      +schema: gold
+
+seeds:
+  clinical_event_stream:
+    +schema: ref
+    ref_chronic_conditions:
+      +column_types: {code: varchar, chronic_group: varchar, display: varchar}
+    ref_payer_type:
+      +column_types: {payer_name: varchar, payer_type: varchar}
+
+tests:
+  clinical_event_stream:
+    +store_failures: false

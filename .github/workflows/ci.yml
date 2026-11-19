@@ -1,0 +1,56 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CES_DEID_SALT: ${{ secrets.CES_DEID_SALT || 'ci-salt' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: Lint
+        run: ruff check src tests
+
+      - name: Unit tests (contracts, FHIR flattening, 18 de-identification classes, quarantine, export)
+        run: pytest -q
+
+      - name: Cache the Synthea jar
+        uses: actions/cache@v4
+        with:
+          path: .cache/synthea-with-dependencies.jar
+          key: synthea-v4.0.0-ed43c20a
+
+      # The gate that proves the hard part: a real Synthea cohort through every
+      # stage, then dbt's 90+ tests on the result and the two feeds validated.
+      - name: End to end on a 40-patient cohort
+        run: |
+          python -m ces run --patients 40 --seed 40 --only-this-cohort --no-extend
+          python scripts/check_feeds.py site/data/summary.json site/data/weekly.json
+
+      - name: Upload the feeds for inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: feeds
+          path: site/data/

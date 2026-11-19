@@ -1,0 +1,78 @@
+name: publish
+
+# Weekly: a fresh seeded cohort for the ISO week, the whole pipeline, the two
+# feeds extended with this week's point, the page deployed to GitHub Pages and,
+# when the Azure secrets exist, the layers landed in ADLS Gen2.
+#
+# GitHub's cron starts late, sometimes by hours; nothing here depends on the clock.
+on:
+  schedule:
+    - cron: "17 11 * * 1"   # Mondays 11:17 UTC
+  workflow_dispatch:
+    inputs:
+      patients:
+        description: alive patients to generate
+        default: "500"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      CES_DEID_SALT: ${{ secrets.CES_DEID_SALT }}
+      CES_PUBLISHED_BASE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+      CES_TARGET: ${{ secrets.CES_AZURE_STORAGE_ACCOUNT != '' && 'azure' || 'local' }}
+      CES_AZURE_STORAGE_ACCOUNT: ${{ secrets.CES_AZURE_STORAGE_ACCOUNT }}
+      CES_AZURE_STORAGE_KEY: ${{ secrets.CES_AZURE_STORAGE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Refuse to run without a real salt
+        run: test -n "$CES_DEID_SALT" || { echo "set the CES_DEID_SALT repository secret"; exit 1; }
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install
+        run: pip install -e .
+
+      - uses: actions/cache@v4
+        with:
+          path: .cache/synthea-with-dependencies.jar
+          key: synthea-v4.0.0-ed43c20a
+
+      - name: Generate this week's cohort and run everything
+        run: python -m ces run --weekly --patients "${{ inputs.patients || '500' }}" --only-this-cohort
+
+      - name: Validate the feeds
+        run: python scripts/check_feeds.py site/data/summary.json site/data/weekly.json
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

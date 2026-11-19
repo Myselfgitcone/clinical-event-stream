@@ -1,0 +1,67 @@
+version: 2
+
+models:
+  - name: stg_patient
+    columns:
+      - name: patient_key
+        tests: [not_null, unique]
+      - name: gender
+        tests:
+          - accepted_values: {arguments: {values: [male, female, other, unknown]}}
+      - name: age_band
+        tests:
+          - not_null
+          - accepted_values: {arguments: {values: ["0-17", "18-34", "35-49", "50-64", "65-79", "80-89", "90+"]}}
+      - name: zip3
+        tests:
+          - zip3_shape
+  - name: stg_encounter
+    columns:
+      - name: encounter_key
+        tests: [not_null, unique]
+      - name: patient_key
+        tests:
+          - not_null
+          - relationships: {arguments: {to: ref('stg_patient'), field: patient_key}}
+      - name: class_code
+        tests:
+          - accepted_values: {arguments: {values: [AMB, EMER, IMP, ACUTE, NONAC, OBSENC, PRENC, SS, VR, HH]}}
+  - name: stg_condition
+    columns:
+      - name: condition_key
+        tests: [not_null, unique]
+      - name: patient_key
+        tests:
+          - relationships: {arguments: {to: ref('stg_patient'), field: patient_key}}
+  - name: stg_observation
+    columns:
+      - name: observation_key
+        tests: [not_null, unique]
+      - name: patient_key
+        tests:
+          - relationships: {arguments: {to: ref('stg_patient'), field: patient_key}}
+  - name: stg_medication_request
+    columns:
+      - name: medication_request_key
+        tests: [not_null, unique]
+      - name: patient_key
+        tests:
+          - relationships: {arguments: {to: ref('stg_patient'), field: patient_key}}
+  - name: stg_procedure
+    columns:
+      - name: procedure_key
+        tests: [not_null, unique]
+  - name: stg_immunization
+    columns:
+      - name: immunization_key
+        tests: [not_null, unique]
+  - name: stg_claim
+    columns:
+      - name: claim_key
+        tests: [not_null, unique]
+      - name: payer_name
+        tests: [not_null]
+  - name: stg_cohort
+    columns:
+      - name: cohort_id
+        tests: [not_null, unique]
