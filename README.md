@@ -294,6 +294,10 @@ and the query engine is Synapse serverless at $5 per TB scanned over a gold
 layer of a few megabytes. An Event Hubs plus Spark Structured Streaming edition
 fits inside the $200 first-month credit; it is on the roadmap, not in this repo.
 
+Deployed 2026-11-20: account `cesjagadish7388` in `rg-clinical-event-stream`, East US 2,
+created from the Bicep below; the first cohort's 40 files (bronze, silver, gold,
+the two feeds) landed from the laptop with `ces land`.
+
 ### Setting it up (one time, about ten minutes)
 
 1. Create the free account at https://azure.microsoft.com/free (needs a card; nothing is charged while the credit and the free amounts last). Install the Azure CLI and `az login`.

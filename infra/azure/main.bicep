@@ -14,6 +14,9 @@ param location string = resourceGroup().location
 // 5 GB of LRS blob storage for 12 months; this project should cost nothing.
 param budgetAmount int = 1
 
+// utcNow() is only allowed as a parameter default; the budget period starts this month.
+param deployedMonth string = utcNow('yyyy-MM')
+
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storageAccountName
   location: location
@@ -75,7 +78,7 @@ resource budget 'Microsoft.Consumption/budgets@2023-11-01' = {
     amount: budgetAmount
     timeGrain: 'Monthly'
     timePeriod: {
-      startDate: '${substring(utcNow(), 0, 7)}-01'
+      startDate: '${deployedMonth}-01'
     }
     notifications: {
       actual80: {
