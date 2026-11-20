@@ -1,14 +1,16 @@
 // Reads the two feeds the pipeline publishes and fills the page. No framework.
+const PORTFOLIO_URL = "https://jagadish-butukuri.vercel.app";
 const $ = (id) => document.getElementById(id);
 const n = (x) => (x == null ? "–" : Number(x).toLocaleString("en-US"));
 const pct = (x) => (x == null ? "–" : `${(x * 100).toFixed(1)}%`);
 
 function ago(iso) {
   const ms = Date.now() - new Date(iso).getTime();
-  const h = Math.round(ms / 36e5);
-  if (h < 1) return "just now";
+  const m = Math.round(ms / 6e4);
+  if (m < 60) return `${Math.max(m, 1)} min ago`;
+  const h = Math.round(m / 60);
   if (h < 48) return `${h} h ago`;
-  return `${Math.round(h / 24)} d ago`;
+  return `${Math.round(h / 24)} days ago`;
 }
 
 function fill(tableId, rows, cells) {
@@ -57,13 +59,16 @@ async function main() {
   try {
     s = await read("data/summary.json");
   } catch (e) {
-    $("status").textContent = "summary.json not published yet";
-    $("status").classList.add("down");
+    $("fresh").textContent = "summary.json is not published yet";
+    $("fresh-line").classList.add("down");
     return;
   }
+  $("hub-link").href = s.portfolio_url || PORTFOLIO_URL;
+  $("hub-link").classList.remove("hidden");
   const v = s.volumes || {};
-  $("status").textContent = `built ${ago(s.generated_at)} · ${(s.cohorts || []).length} cohort(s) · dbt ${n(s.dbt?.models)} models · warehouse ${(s.warehouse_bytes / 1e6).toFixed(0)} MB`;
-  $("status").classList.add("live");
+  const cohorts = s.cohorts || [];
+  $("fresh").textContent = `Rebuilt ${ago(s.generated_at)} · ${cohorts.length} cohort${cohorts.length === 1 ? "" : "s"} · ${n(s.dbt?.models)} dbt models · ${(s.warehouse_bytes / 1e6).toFixed(0)} MB warehouse`;
+  fill("cohorts", cohorts, (r) => [[`<span class="pill">${r.cohort_id}</span>`], [n(r.bundles), "r"], [r.seconds == null ? "–" : Number(r.seconds).toFixed(0), "r"]]);
   $("t-patients").textContent = n(v.patients);
   $("t-encounters").textContent = n(v.encounters);
   $("t-observations").textContent = n(v.observations);
@@ -71,11 +76,14 @@ async function main() {
   $("t-quarantine").textContent = n(v.quarantine);
   $("t-tests").textContent = s.dbt?.tests ? `${n(s.dbt.tests_passed)}/${n(s.dbt.tests)}` : "–";
 
-  fill("pairs", s.condition_pairs, (r) => [
-    [`${r.condition_a} <span class="note">+</span> ${r.condition_b}`],
+  const pairs = s.condition_pairs || [];
+  const maxShare = Math.max(...pairs.map((r) => r.share_of_patients || 0), 0.0001);
+  fill("pairs", pairs, (r) => [
+    [`${r.condition_a}<span class="plus">+</span>${r.condition_b}`],
     [n(r.patients_with_both), "r"],
     [pct(r.share_of_patients), "r"],
     [r.lift == null ? "–" : Number(r.lift).toFixed(2), "r"],
+    [`<div class="bar"><span style="width:${(((r.share_of_patients || 0) / maxShare) * 100).toFixed(0)}%"></span></div>`, "hide-sm"],
   ]);
 
   const cg = s.care_gaps || {};
@@ -110,9 +118,9 @@ async function main() {
     const w = await read("data/weekly.json");
     spark(w);
     const last = w[w.length - 1];
-    $("spark-note").textContent = `${w.length} week(s) in the series · latest week ${last.week_start}: ${n(last.patients)} patients, ${n(last.encounters)} encounters, ${n(last.quarantine)} quarantined`;
+    $("spark-note").textContent = `${w.length} week${w.length === 1 ? "" : "s"} in the series · latest week ${last.week_start}: ${n(last.patients)} patients, ${n(last.encounters)} encounters, ${n(last.quarantine)} quarantined`;
   } catch {
-    $("spark-note").textContent = "weekly.json not published yet";
+    $("spark-note").textContent = "weekly.json is not published yet";
   }
 }
 main();
