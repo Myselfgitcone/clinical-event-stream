@@ -74,7 +74,12 @@ async function main() {
   $("t-observations").textContent = n(v.observations);
   $("t-conditions").textContent = n(v.conditions);
   $("t-quarantine").textContent = n(v.quarantine);
-  $("t-tests").textContent = s.dbt?.tests ? `${n(s.dbt.tests_passed)}/${n(s.dbt.tests)}` : "–";
+  const t = s.dbt || {};
+  $("t-tests").textContent = t.tests ? `${n(t.tests_passed)}/${n(t.tests)}` : "–";
+  if (t.tests) {
+    const failed = (t.failures || []).length;
+    $("t-tests-d").textContent = failed ? `${failed} failed on the last run` : t.tests_warned ? `${t.tests_warned} warning, none failed` : "all passed on the last run";
+  }
 
   const pairs = s.condition_pairs || [];
   const maxShare = Math.max(...pairs.map((r) => r.share_of_patients || 0), 0.0001);
